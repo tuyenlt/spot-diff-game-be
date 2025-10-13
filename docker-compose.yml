@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  database:
+    image: mysql:8.0
+    container_name: image_diff_game
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - app-network      
+
+volumes:
+  db_data:
+
+networks:
+  app-network:
+    driver: bridge
