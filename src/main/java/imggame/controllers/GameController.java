@@ -2,13 +2,15 @@ package imggame.controllers;
 
 import java.sql.Connection;
 
+import imggame.database.Database;
+
 public class GameController {
 	private Connection connection;
 	private UserController userController;
 
-	public GameController(Connection connection) {
-		this.connection = connection;
-		this.userController = UserController.getInstance();
+	public GameController() {
+		this.connection = Database.getConnection();
+		this.userController = new UserController();
 	}
 
 	public void getRandomImageSet() {

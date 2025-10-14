@@ -10,18 +10,10 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class UserController {
-	private static UserController instance;
 	private Connection connection;
 
-	private UserController(Connection connection) {
-		this.connection = connection;
-	}
-
-	public static UserController getInstance() {
-		if (instance == null) {
-			instance = new UserController(Database.getConnection());
-		}
-		return instance;
+	public UserController() {
+		this.connection = Database.getConnection();
 	}
 
 	// Add user-related methods here

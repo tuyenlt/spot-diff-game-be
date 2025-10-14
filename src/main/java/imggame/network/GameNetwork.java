@@ -17,7 +17,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class GameNetwork {
 	private final int PORT;
 	private ServerSocket serverSocket;
-	private UserController userController = UserController.getInstance();
+	private UserController userController = new UserController();
 	// private GameController gameController = GameController.getInstance();
 
 	public GameNetwork() {
