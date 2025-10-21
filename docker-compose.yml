@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   database:
@@ -17,7 +17,7 @@ services:
       - db_data:/var/lib/mysql
     restart: unless-stopped
     networks:
-      - app-network      
+      - app-network
 
 volumes:
   db_data:

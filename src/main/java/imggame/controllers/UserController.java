@@ -1,13 +1,14 @@
 package imggame.controllers;
 
-import imggame.models.User;
-import imggame.database.Database;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
+import imggame.database.Database;
+import imggame.models.User;
 
 public class UserController {
 	private Connection connection;
@@ -16,20 +17,39 @@ public class UserController {
 		this.connection = Database.getConnection();
 	}
 
+	public boolean isUsernameOrEmailTaken(String username, String email) throws SQLException {
+		String query = "SELECT COUNT(*) FROM users WHERE username = ? OR email = ?";
+		try (PreparedStatement stmt = connection.prepareStatement(query)) {
+			stmt.setString(1, username);
+			stmt.setString(2, email);
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt(1) > 0;
+			}
+		}
+		return false;
+	}
+
 	// Add user-related methods here
-	public void createUser(User user) {
+	public boolean createUser(User user) {
 		try {
-			String query = "INSERT INTO users (username, email, password, score, elo) VALUES (?, ?, ?, ?, ?)";
-			PreparedStatement statement = connection.prepareStatement(query);
-			statement.setString(1, user.getUsername());
-			statement.setString(2, user.getEmail());
-			statement.setString(3, user.getPassword());
-			statement.setInt(4, user.getScore());
-			statement.setInt(5, user.getElo());
-			statement.executeUpdate();
+			if (isUsernameOrEmailTaken(user.getUsername(), user.getEmail())) {
+				return false;
+			}
+			String query = "INSERT INTO users (id, username, email, password, score, elo) VALUES (?, ?, ?, ?, ?, ?)";
+			try (PreparedStatement statement = connection.prepareStatement(query)) {
+				statement.setString(1, user.getId());
+				statement.setString(2, user.getUsername());
+				statement.setString(3, user.getEmail());
+				statement.setString(4, user.getPassword());
+				statement.setInt(5, user.getScore());
+				statement.setInt(6, user.getElo());
+				statement.executeUpdate();
+				return true;
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			throw new RuntimeException("Error creating user", e);
+			return false;
 		}
 	}
 

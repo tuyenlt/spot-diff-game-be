@@ -1,6 +1,8 @@
 
 package imggame.models;
 
+import java.util.UUID;
+
 public class User {
 	private String id;
 	private String username;
@@ -9,8 +11,8 @@ public class User {
 	private int score;
 	private int elo;
 
-	public User(String id, String username, String email, String password, int score, int elo) {
-		this.id = id;
+	public User(String username, String email, String password, int score, int elo) {
+		this.id = UUID.randomUUID().toString();
 		this.username = username;
 		this.email = email;
 		this.password = password;
@@ -19,6 +21,7 @@ public class User {
 	}
 
 	public User(String username, String email, String password) {
+		this.id = UUID.randomUUID().toString();
 		this.username = username;
 		this.email = email;
 		this.password = password;

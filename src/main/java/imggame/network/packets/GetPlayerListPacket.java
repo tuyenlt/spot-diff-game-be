@@ -1,6 +1,8 @@
 package imggame.network.packets;
 
-public class GetPlayerListPacket {
+import java.io.Serializable;
+
+public class GetPlayerListPacket implements Serializable {
 	public int pageSize;
 	public int offset;
 	public Boolean isDESC;

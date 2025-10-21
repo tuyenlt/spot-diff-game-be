@@ -1,6 +1,8 @@
 package imggame.network.packets;
 
-public class InvitePacket {
+import java.io.Serializable;
+
+public class InvitePacket implements Serializable {
 	public int senderId;
 	public int receiverId;
 

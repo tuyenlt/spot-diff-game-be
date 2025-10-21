@@ -5,7 +5,6 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.util.List;
 
-import imggame.controllers.GameController;
 import imggame.controllers.UserController;
 import imggame.models.User;
 import imggame.network.packets.ErrorPacket;
@@ -87,8 +86,12 @@ public class GameNetwork {
 			if (request instanceof RegisterPacket) {
 				RegisterPacket registerPacket = (RegisterPacket) request;
 				User user = new User(registerPacket.username, registerPacket.email, registerPacket.password);
-				userController.createUser(user);
-				output.writeObject("Registration successful");
+				boolean success = userController.createUser(user);
+				if (success) {
+					output.writeObject("Registration successful");
+				} else {
+					output.writeObject(new ErrorPacket("Username or email already exists"));
+				}
 			}
 
 		} catch (Exception e) {

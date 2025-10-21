@@ -1,6 +1,8 @@
 package imggame.network.packets;
 
-public class RegisterPacket {
+import java.io.Serializable;
+
+public class RegisterPacket implements Serializable {
 	public String username;
 	public String email;
 	public String password;

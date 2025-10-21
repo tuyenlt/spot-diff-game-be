@@ -1,6 +1,8 @@
 package imggame.network.packets;
 
-public class GameMatchingPacket {
+import java.io.Serializable;
+
+public class GameMatchingPacket implements Serializable {
 	public int playerId;
 
 	public GameMatchingPacket(int playerId) {
