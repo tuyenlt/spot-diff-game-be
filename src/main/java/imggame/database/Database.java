@@ -3,22 +3,16 @@ package imggame.database;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import io.github.cdimascio.dotenv.Dotenv;
+
+import imggame.config.AppConfig;
 
 public class Database {
 	public static Connection conn;
 
 	public static void init() {
-		Dotenv dotenv = Dotenv.load();
-
-		String dbHost = dotenv.get("DB_HOST");
-		String dbPort = dotenv.get("DB_PORT");
-		String dbName = dotenv.get("MYSQL_DATABASE");
-		String dbUser = dotenv.get("MYSQL_USER");
-		String dbPassword = dotenv.get("MYSQL_PASSWORD");
-
-		String url = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName
-				+ "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+		String url = AppConfig.getDatabaseUrl();
+		String dbUser = AppConfig.MYSQL_USER;
+		String dbPassword = AppConfig.MYSQL_PASSWORD;
 
 		try {
 			conn = DriverManager.getConnection(url, dbUser, dbPassword);

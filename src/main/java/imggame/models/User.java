@@ -1,21 +1,27 @@
 
 package imggame.models;
 
-public class User {
-	private String id;
+import java.io.Serializable;
+
+public class User implements Serializable {
+	private int id;
 	private String username;
 	private String email;
 	private String password;
+	private boolean isOnline;
+	private boolean isInGame;
 	private int score;
 	private int elo;
 
-	public User(String id, String username, String email, String password, int score, int elo) {
+	public User(int id, String username, String email, String password, int score, int elo) {
 		this.id = id;
 		this.username = username;
 		this.email = email;
 		this.password = password;
 		this.score = score;
 		this.elo = elo;
+		this.isInGame = false;
+		this.isOnline = false;
 	}
 
 	public User(String username, String email, String password) {
@@ -24,9 +30,27 @@ public class User {
 		this.password = password;
 		this.score = 0;
 		this.elo = 1000;
+		this.isInGame = false;
+		this.isOnline = false;
 	}
 
-	public String getId() {
+	public boolean isOnline() {
+		return isOnline;
+	}
+
+	public boolean isInGame() {
+		return isInGame;
+	}
+
+	public void setOnline(boolean isOnline) {
+		this.isOnline = isOnline;
+	}
+
+	public void setInGame(boolean isInGame) {
+		this.isInGame = isInGame;
+	}
+
+	public int getId() {
 		return id;
 	}
 
@@ -50,7 +74,7 @@ public class User {
 		return elo;
 	}
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 
