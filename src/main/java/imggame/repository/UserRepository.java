@@ -204,4 +204,5 @@ public class UserRepository {
 		user.setInGame(resultSet.getBoolean("is_in_game"));
 		return user;
 	}
+
 }
