@@ -7,7 +7,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import imggame.models.User;
-import imggame.repository.UserRepository;
 
 public class GameRoom {
 	private String id;

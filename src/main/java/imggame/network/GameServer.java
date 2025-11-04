@@ -292,7 +292,7 @@ public class GameServer {
 								? room.getPlayer2().info.getId()
 								: room.getPlayer1().info.getId();
 
-						sendToClient(otherPlayerId, new ErrorResponse("Đối thủ đã rời phòng"));
+						sendToClient(otherPlayerId, new ErrorResponse("Opponent has left the game"));
 					}
 
 				} else {
@@ -343,7 +343,7 @@ public class GameServer {
 
 					if (otherPlayer != null) {
 						sendToClient(otherPlayer.info.getId(),
-								new ErrorResponse("Đối thủ đã ngắt kết nối"));
+								new ErrorResponse("Opponent has disconnected"));
 					}
 
 					gameController.getRoomManager().playerLeaveRoom(userId);
