@@ -18,6 +18,11 @@ import imggame.repository.UserRepository;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class GameController {
 	private UserRepository userRepository;
@@ -32,36 +37,47 @@ public class GameController {
 		return this.roomManager;
 	}
 
-	public Object handleCreateGameRoom(CreateGameRoomRequest request, Player player) {
+	public Object handleCreateGameRoom(CreateGameRoomRequest request) {
 		try {
+
+			User user = this.userRepository.findById(request.getUserId());
+			if (user == null) {
+				return new ErrorResponse("User not found");
+			}
+
 			if (roomManager.isPlayerInRoom(request.getUserId())) {
 				return new ErrorResponse("Already in a game room");
 			}
-
-			ImageSet imageSet = getRandomImageSet();
-
-			GameRoom room = roomManager.createRoom(player, imageSet);
+			Player player = new Player(user);
+			GameRoom room = roomManager.createRoom(player);
 			this.userRepository.updateInGameStatus(player.info.getId(), false);
 			return new GameRoomResponse(
 					room.getId(),
 					room.getState().toString(),
 					player.info,
 					null,
-					imageSet.getOriginImagePath(),
-					imageSet.getDiffImagePath(),
-					imageSet.getTotalDifferences());
-
+					room.getImageSet().getOriginImagePath(),
+					room.getImageSet().getDiffImagePath(),
+					room.getImageSet().getTotalDifferences()
+			);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ErrorResponse("Error when create ew room " + e.getMessage());
 		}
 	}
 
-	public Object handleJoinGameRoom(JoinGameRoomRequest request, Player player) {
+	public Object handleJoinGameRoom(JoinGameRoomRequest request) {
 		try {
 			if (roomManager.isPlayerInRoom(request.getUserId())) {
 				return new ErrorResponse("You are already in a game room");
 			}
+
+			User user = this.userRepository.findById(request.getUserId());
+			if (user == null) {
+				return new ErrorResponse("User not found");
+			}
+
+			Player player = new Player(user);
 
 			GameRoom room = roomManager.joinRoom(request.getRoomId(), player);
 
@@ -97,7 +113,13 @@ public class GameController {
 				return new ErrorResponse("Not enough players");
 			}
 
-			room.start();
+			room.getPlayerById(request.getUserId()).isReady = true;
+
+			if(room.isAllReady()){
+				room.start();
+			} else {
+				return new MessagePacket("Waiting for the other player to be ready", "ROOM_WAIT_READY");
+			}
 
 			return new GameStartNotification(
 					room.getId(),
@@ -162,9 +184,50 @@ public class GameController {
 	}
 
 	public ImageSet getRandomImageSet() {
-		// TODO: Implement việc lấy random từ database hoặc folder
-		// Hiện tại return default image set
-		return new ImageSet();
+		try {
+			InputStream inputStream = getClass().getResourceAsStream("/dataset/image_sets.json");
+			if (inputStream == null) {
+				System.err.println("Cannot find image_sets.json in resources");
+				return new ImageSet();
+			}
+
+			String jsonContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+			JSONArray imageSetsArray = new JSONArray(jsonContent);
+
+			if (imageSetsArray.isEmpty()) {
+				System.err.println("image_sets.json is empty");
+				return new ImageSet();
+			}
+
+			Random random = new Random();
+			int randomIndex = random.nextInt(imageSetsArray.length());
+			JSONObject selectedImageSet = imageSetsArray.getJSONObject(randomIndex);
+
+			String diffImagePath = "dataset/" + selectedImageSet.getString("diff_image");
+			String orgImagePath = "dataset/" + selectedImageSet.getString("org_image");
+
+			JSONArray diffBoxesArray = selectedImageSet.getJSONArray("diff_boxes");
+			DiffBox[] diffBoxes = new DiffBox[diffBoxesArray.length()];
+
+			for (int i = 0; i < diffBoxesArray.length(); i++) {
+				JSONObject boxJson = diffBoxesArray.getJSONObject(i);
+				diffBoxes[i] = new DiffBox(
+						boxJson.getInt("x"),
+						boxJson.getInt("y"),
+						boxJson.getInt("width"),
+						boxJson.getInt("height"));
+			}
+
+			int difficulty = Math.min(5, Math.max(1, diffBoxes.length / 2));
+
+			System.out.println("Loaded image set: " + diffImagePath + " with " + diffBoxes.length + " differences");
+			return new ImageSet(orgImagePath, diffImagePath, diffBoxes, difficulty);
+
+		} catch (Exception e) {
+			System.err.println("Error loading random image set: " + e.getMessage());
+			e.printStackTrace();
+			return new ImageSet();
+		}
 	}
 
 	public Object getImageResource(GetImageRequest request) {
@@ -188,7 +251,7 @@ public class GameController {
 				return new ErrorResponse("User not found");
 			}
 			this.userRepository.updateInGameStatus(request.senderId, true);
-			GameRoom room = this.roomManager.createRoom(new Player(inviteUser), getRandomImageSet());
+			GameRoom room = this.roomManager.createRoom(new Player(inviteUser));
 			InviteResponse response = new InviteResponse(inviteUser, room.getId());
 			return response;
 		} catch (Exception e) {

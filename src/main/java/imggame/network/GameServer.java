@@ -12,6 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.google.protobuf.Message;
+
 import imggame.config.AppConfig;
 import imggame.controllers.GameController;
 import imggame.controllers.UserController;
@@ -27,10 +29,10 @@ import imggame.network.packets.GameStartNotification;
 import imggame.network.packets.GameStateUpdateNotification;
 import imggame.network.packets.GetPlayerListRequest;
 import imggame.network.packets.GuessPointRequest;
-import imggame.network.packets.GuessPointResponse;
 import imggame.network.packets.JoinGameRoomRequest;
 import imggame.network.packets.LeaveGameRoomRequest;
 import imggame.network.packets.LoginRequest;
+import imggame.network.packets.MessagePacket;
 import imggame.network.packets.RegisterRequest;
 import imggame.network.packets.StartGameRequest;
 
@@ -115,13 +117,11 @@ public class GameServer {
 			try {
 				gameController.getRoomManager().getAllRooms().forEach(room -> {
 					if (room.getState() == GameRoom.GameState.PLAYING && room.isFull()) {
-						Player currentPlayer = room.getCurrentPlayer();
-						GameStateUpdateNotification update = new GameStateUpdateNotification(
+			  			GameStateUpdateNotification update = new GameStateUpdateNotification(
 								room.getId(),
-								currentPlayer.info.getId(),
-								currentPlayer.timer,
-								room.getPlayer1().score,
-								room.getPlayer2().score);
+								room.getState(),
+								room.getPlayer1(),
+								room.getPlayer2());
 
 						sendToClient(room.getPlayer1().info.getId(), update);
 						sendToClient(room.getPlayer2().info.getId(), update);
@@ -200,33 +200,20 @@ public class GameServer {
 					response = userController.handleGetPlayerList(getPlayerListPacket);
 
 				} else if (request instanceof CreateGameRoomRequest) {
-					CreateGameRoomRequest createRoom = (CreateGameRoomRequest) request;
-
-					User currentUser = userController.getUserById(this.userId);
-					if (currentUser == null) {
-						response = new ErrorResponse("User not found");
-					} else {
-						Player player = new Player(currentUser);
-						response = gameController.handleCreateGameRoom(createRoom, player);
-					}
+					CreateGameRoomRequest createRoom = (CreateGameRoomRequest) request;				
+					response = gameController.handleCreateGameRoom(createRoom);
 
 				} else if (request instanceof JoinGameRoomRequest) {
-					JoinGameRoomRequest joinRoom = (JoinGameRoomRequest) request;
+					JoinGameRoomRequest joinRoomReq = (JoinGameRoomRequest) request;
 
-					User currentUser = userController.getUserById(this.userId);
-					if (currentUser == null) {
-						response = new ErrorResponse("User not found");
-					} else {
-						Player player = new Player(currentUser);
-						response = gameController.handleJoinGameRoom(joinRoom, player);
+					response = gameController.handleJoinGameRoom(joinRoomReq);
 
-						if (!(response instanceof ErrorResponse)) {
-							GameRoomResponse roomResponse = (GameRoomResponse) response;
-							GameRoom room = gameController.getRoomManager().getRoom(roomResponse.getRoomId());
+					if (!(response instanceof ErrorResponse)) {
+						GameRoomResponse roomResponse = (GameRoomResponse) response;
+						GameRoom room = gameController.getRoomManager().getRoom(roomResponse.getRoomId());
 
-							if (room != null && room.getPlayer1() != null) {
-								sendToClient(room.getPlayer1().info.getId(), (BasePacket) response);
-							}
+						if (room != null && room.getPlayer1() != null) {
+							sendToClient(room.getPlayer1().info.getId(), (BasePacket) response);
 						}
 					}
 
@@ -265,16 +252,6 @@ public class GameServer {
 
 							sendToClient(room.getPlayer1().info.getId(), endNotif);
 							sendToClient(room.getPlayer2().info.getId(), endNotif);
-
-							new Thread(() -> {
-								try {
-									Thread.sleep(10000);
-									gameController.getRoomManager().removeRoom(room.getId());
-									System.out.println("Room " + room.getId() + " removed after game ended");
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								}
-							}).start();
 						}
 
 						return;
@@ -282,17 +259,17 @@ public class GameServer {
 
 				} else if (request instanceof LeaveGameRoomRequest) {
 					LeaveGameRoomRequest leaveRoom = (LeaveGameRoomRequest) request;
-
 					GameRoom room = gameController.getRoomManager().getRoomByPlayer(leaveRoom.getUserId());
-
-					response = gameController.handleLeaveGameRoom(leaveRoom);
-
 					if (room != null && room.isFull()) {
-						int otherPlayerId = room.getPlayer1().info.getId() == leaveRoom.getUserId()
-								? room.getPlayer2().info.getId()
-								: room.getPlayer1().info.getId();
-
-						sendToClient(otherPlayerId, new ErrorResponse("Opponent has left the game"));
+						Player otherPlayer = room.getOpponent(leaveRoom.getUserId());
+						if(otherPlayer != null){
+							int otherPlayerId = otherPlayer.info.getId();
+							sendToClient(otherPlayerId, new MessagePacket("Opponent has left the game", "OPPONENT_LEFT"));
+						}
+					} 
+					response = gameController.handleLeaveGameRoom(leaveRoom);
+					if(room != null && room.isEmpty()){
+						gameController.getRoomManager().removeRoom(room.getId());
 					}
 
 				} else {
@@ -343,7 +320,7 @@ public class GameServer {
 
 					if (otherPlayer != null) {
 						sendToClient(otherPlayer.info.getId(),
-								new ErrorResponse("Opponent has disconnected"));
+								new MessagePacket("Opponent has disconnected", "OPPONENT_LEFT"));
 					}
 
 					gameController.getRoomManager().playerLeaveRoom(userId);
