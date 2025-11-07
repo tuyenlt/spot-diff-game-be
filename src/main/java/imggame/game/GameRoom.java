@@ -7,7 +7,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import imggame.models.User;
-import imggame.utlis.GameHelper;
+import imggame.utils.GameHelper;
 
 public class GameRoom {
 	private String id;
@@ -127,7 +127,6 @@ public class GameRoom {
 	public ImageSet getImageSet() {
 		return this.imageSet;
 	}
-
 
 	public int getPointLeftToGuess() {
 		return this.pointLeftToGuess;
@@ -264,7 +263,7 @@ public class GameRoom {
 		} else if (player2 != null && player2.info.getId() == userId) {
 			player2 = null;
 		}
-		if(state == GameState.PLAYING){
+		if (state == GameState.PLAYING) {
 			this.endGame();
 		}
 		this.state = GameState.WAITING;

@@ -2,6 +2,7 @@ package imggame.network.packets;
 
 import imggame.game.Player;
 import imggame.game.GameRoom.GameState;
+import imggame.network.types.PacketType;
 
 public class GameStateUpdateNotification extends BasePacket {
 	private static final long serialVersionUID = 1L;
@@ -11,7 +12,6 @@ public class GameStateUpdateNotification extends BasePacket {
 	public Player player1;
 	public Player player2;
 
-	
 	public GameStateUpdateNotification(String roomId, GameState gameState, Player player1, Player player2) {
 		this.roomId = roomId;
 		this.gameState = gameState;
@@ -20,7 +20,7 @@ public class GameStateUpdateNotification extends BasePacket {
 	}
 
 	@Override
-	public String getType() {
-		return "GAME_STATE_UPDATE";
+	public PacketType getType() {
+		return PacketType.ROOM_RESPONSE;
 	}
 }

@@ -1,4 +1,4 @@
-package imggame.utlis;
+package imggame.utils;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -11,9 +11,9 @@ import imggame.game.DiffBox;
 import imggame.game.ImageSet;
 
 public class GameHelper {
-    public static ImageSet getRandomImageSet() {
+	public static ImageSet getRandomImageSet() {
 		try {
-			InputStream inputStream = getClass().getResourceAsStream("/dataset/image_sets.json");
+			InputStream inputStream = GameHelper.class.getResourceAsStream("/dataset/image_sets.json");
 			if (inputStream == null) {
 				System.err.println("Cannot find image_sets.json in resources");
 				return new ImageSet();
